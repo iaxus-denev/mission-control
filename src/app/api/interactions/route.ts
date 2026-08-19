@@ -37,6 +37,10 @@ export const GET = withRoute<unknown, InteractionsGetQuery>(
     });
     return NextResponse.json({ interactions, count: interactions.length });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/sqlite3 is required/i.test(message)) {
+      return NextResponse.json({ interactions: [], count: 0, available: false, reason: message });
+    }
     return serverError(error instanceof Error ? error.message : String(error));
   }
   },

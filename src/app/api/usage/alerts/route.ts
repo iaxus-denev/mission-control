@@ -69,11 +69,19 @@ async function buildStatusPayload() {
 export const GET = withRoute(
   { name: "/api/usage/alerts", querySchema: usageAlertsPollQuerySchema },
   async (_request: NextRequest, ctx) => {
-    if (ctx.query.poll === "1") {
-      const alerts = await pollPendingAlertFirings(20);
-      return NextResponse.json({ ok: true, alerts, timestamp: Date.now() });
+    try {
+      if (ctx.query.poll === "1") {
+        const alerts = await pollPendingAlertFirings(20);
+        return NextResponse.json({ ok: true, alerts, timestamp: Date.now() });
+      }
+      return buildStatusPayload();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/sqlite3 binary not found/i.test(message)) {
+        return NextResponse.json({ ok: true, available: false, reason: message, alerts: [], rules: [], evaluations: [], recentFirings: [], timestamp: Date.now() });
+      }
+      return serverError(message);
     }
-    return buildStatusPayload();
   },
 );
 
