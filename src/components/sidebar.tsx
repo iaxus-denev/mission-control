@@ -9,6 +9,7 @@ import {
   Activity,
   Archive,
   LayoutDashboard,
+  FolderKanban,
   ListChecks,
   Calendar,
   MessageSquare,
@@ -151,6 +152,7 @@ function YCombinatorIcon({ className }: { className?: string }) {
 const ALL_NAV_ITEMS: NavItem[] = [
   // ── top of the rail — no group label, this IS the product ──
   { section: "chat", label: "Chat", icon: MessageCircle, href: "/chat" },
+  { section: "clawops", label: "ClawOps", icon: FolderKanban, href: "/clawops" },
   { section: "tasks", label: "Tasks", icon: ListChecks, href: "/tasks" },
   { section: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { section: "activity", label: "Activity", icon: Activity, href: "/activity" },

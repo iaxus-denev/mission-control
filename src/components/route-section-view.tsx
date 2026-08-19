@@ -14,6 +14,10 @@ function SectionLoading() {
   return <ContentLoadingState />;
 }
 
+const ClawOpsView = dynamic(
+  () => import("@/components/clawops-view").then((m) => m.ClawOpsView),
+  { loading: () => <SectionLoading /> }
+);
 const TasksView = dynamic(
   () => import("@/components/tasks-view").then((m) => m.TasksView),
   { loading: () => <SectionLoading /> }
@@ -149,6 +153,7 @@ const ApprovalsView = dynamic(
 
 export type DashboardSection =
   | "dashboard"
+  | "clawops"
   | "chat"
   | "agents"
   | "tasks"
@@ -198,6 +203,8 @@ function SectionContent({ section }: { section: DashboardSection }) {
   switch (section) {
     case "dashboard":
       return <DashboardView />;
+    case "clawops":
+      return <ClawOpsView />;
     case "agents":
       return <AgentsView />;
     case "tasks":

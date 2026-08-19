@@ -43,6 +43,10 @@ async function atomicJson(path: string, value: unknown) {
 }
 async function json<T>(path: string): Promise<T> { return JSON.parse(await readFile(path, "utf8")) as T; }
 async function exists(path: string) { try { await stat(path); return true; } catch (e: unknown) { if ((e as NodeJS.ErrnoException).code === "ENOENT") return false; throw e; } }
+async function writeIfMissing(path: string, content: string) {
+  try { await writeFile(path, content, { encoding: "utf8", flag: "wx" }); }
+  catch (error: unknown) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+}
 async function appendEvent(path: string, event: JobHistoryEvent) { const h = await open(path, "a", 0o664); try { await h.writeFile(`${JSON.stringify(event)}\n`, "utf8"); await h.sync(); } finally { await h.close(); } }
 function event(type: string, actorId: string, data: Record<string, unknown>, correlationId?: string): JobHistoryEvent { return { schemaVersion: 1, eventId: randomUUID(), type, at: new Date().toISOString(), actorId, ...(correlationId ? { correlationId } : {}), data }; }
 function validateProject(value: ProjectManifest) { if (value.schemaVersion !== 1 || !projectSlugSchema.safeParse(value.slug).success) throw new Error("invalid project manifest"); return value; }
@@ -59,7 +63,7 @@ export async function createProject(input: { slug: string; name: string; project
   projectSlugSchema.parse(input.slug); const dir = await bounded(input.slug);
   return exclusive(dir, async () => { if (await exists(join(dir, "project.json"))) throw new Error("project already exists"); const now = new Date().toISOString(); const p: ProjectManifest = { schemaVersion: PROJECT_SCHEMA_VERSION, slug: input.slug, name: input.name, status: "active", projectLeadAgentId: input.projectLeadAgentId, repositories: input.repositories, createdAt: now, updatedAt: now };
     for (const d of ["jobs","decisions","research","development","testing","marketing","references"]) await mkdir(join(dir,d), { recursive: true });
-    await atomicJson(join(dir,"project.json"),p); await writeFile(join(dir,"README.md"),`# ${input.name}\n\n${input.mission || "Project mission has not been synthesized yet."}\n`,{flag:"wx"}); await writeFile(join(dir,"AGENTS.md"),`# Project agents\n\nProject Lead: \`${input.projectLeadAgentId}\`\n`,{flag:"wx"}); await atomicJson(join(dir,"references","github.json"),{schemaVersion:1,repositories:input.repositories}); return p; });
+    await atomicJson(join(dir,"project.json"),p); await writeIfMissing(join(dir,"README.md"),`# ${input.name}\n\n${input.mission || "Project mission has not been synthesized yet."}\n`); await writeIfMissing(join(dir,"AGENTS.md"),`# Project agents\n\nProject Lead: \`${input.projectLeadAgentId}\`\n`); await atomicJson(join(dir,"references","github.json"),{schemaVersion:1,repositories:input.repositories}); return p; });
 }
 export async function setProjectArchived(slug: string, archived: boolean) { const dir = await bounded(slug); return exclusive(dir, async()=>{ const p=await getProject(slug); const next={...p,status:archived?"archived":"active" as const,updatedAt:new Date().toISOString()}; await atomicJson(join(dir,"project.json"),next); return next; }); }
 async function nextJobId(slug: string) { const dir=await bounded(slug,"jobs"); await mkdir(dir,{recursive:true}); const names=await readdir(dir); const max=names.map(n=>/^JOB-(\d+)$/.exec(n)?.[1]).filter(Boolean).map(Number).reduce((a,b)=>Math.max(a,b),0); return `JOB-${String(max+1).padStart(4,"0")}`; }
