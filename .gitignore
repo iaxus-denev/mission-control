@@ -75,3 +75,8 @@ docs/design/
 # sqlite backup snapshots
 *.db.bak*
 .planning/
+
+# ClawOps canonical runtime state when this checkout is also its Project root
+/project.json
+/jobs/
+/references/github.json
