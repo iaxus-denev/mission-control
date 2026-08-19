@@ -44,3 +44,6 @@ export const linkExecutionSchema = z.object({
   purpose: nonEmpty,
   actorId: nonEmpty.default("system"),
 });
+export const pickupQuerySchema = z.object({ agentId: z.string().trim().min(1).optional() });
+export const claimJobSchema = z.object({ executionId: nonEmpty, runtime: z.enum(["task", "taskflow", "subagent", "cron", "heartbeat", "session", "other"]), agentId: nonEmpty, purpose: nonEmpty.default("implementation"), actorId: nonEmpty.default("heartbeat") });
+export const executionLookupSchema = z.object({ id: nonEmpty });
